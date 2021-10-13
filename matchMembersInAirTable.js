@@ -1,5 +1,6 @@
 // helper functions
-// TODO: comprhensive tests on this regex
+// TODO: Update to use batch operations. There is a limit of 30 table queries per a script invocation
+
 const validEmail = (email => {
     if (!email) { return false; }
     const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
