@@ -3,17 +3,17 @@
 const validEmail = (email => {
     if (!email) { return false; }
     const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-    return re.test(String(email).toLowerCase());
+    return re.test(email.toLowerCase());
 });
 
 const validPhone = (phone => {
-    if (!String(phone)) { return false; }
+    if (!phone) { return false; }
     const re = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/im
-    return re.test(String(phone));
+    return re.test(phone);
 });
 
 const isUnmatchable = (({ email, phone, firstName }) => {
-    return !firstName || (!validEmail(email) && !validPhone(phone));
+    return !firstName && !validEmail(email) && !validPhone(phone);
 });
 
 const normalizePhone = (phone => !phone ? "" : String(phone).replace(/[^\d+]+/g, '') );
@@ -91,7 +91,7 @@ for (let i = 0; i < tablesWithUnmatchedRecords.length; i++) {
         let unmatchedFirstName = normalizeText(unmatchedRecord.getCellValue(tableData.firstNameField));
         let unmatchedEmail = normalizeText(unmatchedRecord.getCellValue(tableData.emailField));
         let unmatchedPhone = normalizePhone(unmatchedRecord.getCellValue(tableData.phoneField));
-        console.log("unmatchedPhone: ", unmatchedPhone)
+
         if (isUnmatchable({ email: unmatchedEmail, phone: unmatchedPhone, firstName: unmatchedFirstName })) {
             unmatchableRecords += 1;
             continue;
@@ -107,10 +107,6 @@ for (let i = 0; i < tablesWithUnmatchedRecords.length; i++) {
             
             if (isUnmatchable({ email: memberEmail, phone: memberPhone, firstName: memberFirstName })) {
                 continue;
-            }
-
-            if (phoneMatch({memberPhone, unmatchedPhone})) {
-                console.log('phone match')
             }
 
             if (phoneMatch({memberPhone, unmatchedPhone}) && emailMatch({ memberEmail, unmatchedEmail})) {
