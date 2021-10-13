@@ -62,9 +62,9 @@ const membershipTableFields = [membershipTableFirstNameField].concat(
         membershipTablePhoneFields.primary,
         membershipTableEmailFields.primary);
 const existingMembersTable = base.getTable(membershipTable.id);
-const existingMembers = await existingMembersTable.selectRecordsAsync(
+let existingMembers = await existingMembersTable.selectRecordsAsync(
     { fields: membershipTableFields }
-).then(queryResult => queryResult.records);;
+).then(queryResult => queryResult.records);
 
 // for each table with unmatched records
 for (let i = 0; i < tablesWithUnmatchedRecords.length; i++) {
@@ -97,7 +97,7 @@ for (let i = 0; i < tablesWithUnmatchedRecords.length; i++) {
             continue;
         }
 
-        let match;
+        let matchId;
         // find a match in the Membership Table
         for (let y = 0; y < existingMembers.length; y++) {
             let member = existingMembers[y];
@@ -110,18 +110,17 @@ for (let i = 0; i < tablesWithUnmatchedRecords.length; i++) {
             }
 
             if (phoneMatch({memberPhone, unmatchedPhone}) && emailMatch({ memberEmail, unmatchedEmail})) {
-                match = member; 
+                matchId = member.id; 
                 break;
             } else if (phoneMatch({memberPhone, unmatchedPhone}) && firstNameMatch({memberFirstName, unmatchedFirstName})) {
-                match = member
-            } else if (match == undefined && emailMatch({memberEmail, unmatchedEmail}) && firstNameMatch({memberFirstName, unmatchedFirstName})) {
-                match = member
+                matchId = member.id;
+            } else if (matchId == undefined && emailMatch({memberEmail, unmatchedEmail}) && firstNameMatch({memberFirstName, unmatchedFirstName})) {
+                matchId = member.id;
             }
         };
 
-        let matchId;
         // create the record if there is no match
-        if (match == undefined) {
+        if (!matchId) {
             let newMemberFields = {
                     [membershipTableFirstNameField]: unmatchedRecord.getCellValue(tableData.firstNameField),
                     [membershipTableLastNameField]: unmatchedRecord.getCellValue(tableData.lastNameField),
@@ -132,9 +131,13 @@ for (let i = 0; i < tablesWithUnmatchedRecords.length; i++) {
 
             matchId = await existingMembersTable.createRecordAsync(newMemberFields);
             newRecords += 1;
+
+            // retrieve existing memnbers to get the new member
+            existingMembers = await existingMembersTable.selectRecordsAsync(
+                { fields: membershipTableFields }
+            ).then(queryResult => queryResult.records);
         } else {
             // TODO: also update existing record's information?
-            matchId = match.id
             matchedRecords += 1;
         }
         
@@ -143,7 +146,6 @@ for (let i = 0; i < tablesWithUnmatchedRecords.length; i++) {
         await table.updateRecordAsync(unmatchedRecord.id, {
             [tableData.memberLinkField]: [{ id: matchId}]
         });
-
     }
 
     console.log(`matched ${matchedRecords} with existing records and created ${newRecords} new records. There were ${unmatchableRecords} unmatchable records`)
